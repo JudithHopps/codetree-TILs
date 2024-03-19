@@ -12,7 +12,7 @@ struct A {
     int cmd, t, x, cnt;
     string name;
 };
-vector<A> v;
+vector<A> commend, v;
 
 int l, q, cmd, t, x, cnt,retP,retS;
 string name;
@@ -29,6 +29,7 @@ void input () {
     for (int i = 0; i < q;i++){
         A a;
         cin >> a.cmd >> a.t;
+        a.name = "", a.cnt = -1, a.x = -1;
 
         if(a.cmd==100){
             cin >> a.x >> a.name;
@@ -37,17 +38,18 @@ void input () {
             cin >> a.x >> a.name >> a.cnt;
             visit[a.name] = a.t;
             position[a.name] = a.x;
+            eat[a.name] = a.cnt;
         }
-        v.push_back(a);
+        commend.push_back(a);
     }
 }
 
 void calSushi () {
- for (int i = 0; i < q;i++){
-        if(v[i].cmd != 100) continue;
+     for (int i = 0; i < commend.size();i++){
+        if(commend[i].cmd != 100) continue;
 
-        A temp = v[i];
-        temp.cmd = v[i].cmd+1;
+        A temp = commend[i];
+        temp.cmd = commend[i].cmd+1;
         string name = temp.name;
         int now_position = temp.x;
         int wait = 0;
@@ -73,23 +75,22 @@ void calSushi () {
 
         v.push_back(temp);
     }
-
 }
+
 void go () {
-    for (int i = 0; i < v.size();i++){
-        if(v[i].cmd==100){
+    for (int i = 0; i < commend.size();i++){
+        if(commend[i].cmd==100){
             retS++;
         }
-        else if (v[i].cmd==101){
+        else if (commend[i].cmd==101){
             retS--;
-            eat[v[i].name]--;
-            if(eat[v[i].name] <= 0){
+            eat[commend[i].name]= eat[commend[i].name] - 1;
+            if(eat[commend[i].name] <= 0){
                 retP--;
             }
         }
-        else if (v[i].cmd==200){
+        else if (commend[i].cmd==200){
             retP++;
-            eat[v[i].name] = v[i].cnt;
         }
         else{
             cout << retP << " " << retS << "\n";
@@ -106,7 +107,8 @@ int main()
 
     calSushi();
 
-    sort(v.begin(), v.end(), cmp);
+    commend.insert(commend.end(), v.begin(), v.end());
+    sort(commend.begin(), commend.end(), cmp);
 
     go();
 
