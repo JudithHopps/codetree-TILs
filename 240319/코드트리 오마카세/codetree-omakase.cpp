@@ -83,8 +83,9 @@ void go () {
         else if (v[i].cmd==101){
             retS--;
             eat[v[i].name]--;
-            if(eat[v[i].name] <= 0)
+            if(eat[v[i].name] <= 0){
                 retP--;
+            }
         }
         else if (v[i].cmd==200){
             retP++;
