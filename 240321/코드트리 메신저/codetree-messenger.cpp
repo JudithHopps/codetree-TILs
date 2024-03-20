@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 int n, q, cmd, c1, c2, parent[100004],onOff[100004], power[100004],visited[100004];
@@ -12,6 +13,7 @@ unordered_set<int> s[100004];
 
 int bfs(int here){
     queue<int> q;
+    unordered_map<int, int> visited;
     visited[here] = 1;
     int cnt = 0;
     q.push(here);
@@ -78,8 +80,8 @@ int main() {
             parent[c2] = p1;
 
             // 부모에 현재 자식 제거
-            s[p1].erase(find(s[p1].begin(), s[p1].end(), c1));
-            s[p2].erase(find(s[p2].begin(), s[p2].end(), c2));
+            s[p1].erase(c1);
+            s[p2].erase(c2);
             
 
             // 부모에 바뀐 자식 push
@@ -90,7 +92,6 @@ int main() {
         // 채팅방 수 조회
         else if(cmd ==500){
             cin >> c1;
-            memset(visited, 0, sizeof(visited));
             cout << bfs(c1) <<"\n";
         }
     }
