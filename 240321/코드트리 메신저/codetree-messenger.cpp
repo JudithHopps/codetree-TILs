@@ -3,23 +3,13 @@
 #include <cstring>
 #include <algorithm>
 #include <queue>
+#include <unordered_set>
 
 using namespace std;
 int n, q, cmd, c1, c2, parent[100004],onOff[100004], power[100004],visited[100004];
-vector<int> adj[100004],temp;
+// vector<int> s[100004];
+unordered_set<int> s[100004];
 
-// int dfs(int here,int dist){
-//     visited[here] = 1;
-//     int cnt = (dist <= power[here]) ? 1 : 0;
-
-//     for(int there : adj[here]){
-//         if(visited[there]) continue;
-//         if(onOff[there]==0) continue;
-//         // if(dist > power[there]) continue;
-//         cnt += dfs(there,dist+1);
-//     }
-//     return cnt;
-// }
 int bfs(int here){
     queue<int> q;
     visited[here] = 1;
@@ -29,7 +19,7 @@ int bfs(int here){
     while(q.size()){
         int now = q.front();
         q.pop();
-        for(int next : adj[now]){
+        for(int next : s[now]){
             if(onOff[next]==0) continue;
             if(visited[next]) continue;
             int dist = visited[now] + 1;
@@ -58,7 +48,7 @@ int main() {
         if(cmd == 100){
             for (int i = 1; i <= n;i++){
                 cin >> parent[i];
-                adj[parent[i]].push_back(i);
+                s[parent[i]].insert(i);
             }
             for (int i = 1; i <= n;i++){
                 cin >> power[i];
@@ -83,55 +73,18 @@ int main() {
             int p1 = parent[c1];
             int p2 = parent[c2];
 
-            // cout << cmd << "  : " << p1 << " " << p2 << "\n";
-
             // 부모 정보 변화
             parent[c1] = p2;
             parent[c2] = p1;
 
             // 부모에 현재 자식 제거
-            adj[p1].erase(find(adj[p1].begin(), adj[p1].end(), c1));
-            adj[p2].erase(find(adj[p2].begin(), adj[p2].end(), c2));
+            s[p1].erase(find(s[p1].begin(), s[p1].end(), c1));
+            s[p2].erase(find(s[p2].begin(), s[p2].end(), c2));
             
-            // int flag = false;
-            // for (int vv : adj[p1]){
-            //     if(vv==c1)
-            //         flag = true;
-            // }
-            // cout << (flag ? "삭제 안됐는데??" : "삭제됨!!")
-            //      << "\n";
-            
-            // for (int vv : adj[p2]){
-            //     if(vv==c1)
-            //         flag = true;
-            // }
-            // cout << (flag ? "삭제 안됐는데??" : "삭제됨!!")
-            //      << "\n";
-
 
             // 부모에 바뀐 자식 push
-            adj[p1].push_back(c2);
-            adj[p2].push_back(c1);
-
-            // flag = false;
-            // for (int vv : adj[p2]){
-            //     if(vv==c1)
-            //         flag = true;
-            // }
-            // cout << (flag ? "들어감!!" : "안들어감!!")
-            //      << "\n";
-
-            // flag = false;
-            // for (int vv : adj[p1]){
-            //     if(vv==c2)
-            //         flag = true;
-            // }
-
-            // cout << (flag ? "들어감!!" : "안들어감!!")
-            //      << "\n";
-
-            // cout << cmd << "  : " << parent[c1] << " " << parent[c2] << "\n";
-
+            s[p1].insert(c2);
+            s[p2].insert(c1);
         }
 
         // 채팅방 수 조회
