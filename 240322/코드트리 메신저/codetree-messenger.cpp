@@ -46,7 +46,7 @@ void toggle_isOff(int c1) {
             for (int i = num; i <= 20;i++){
                 ret[cur] -= cnt[c1][i];
                 if(i > num)
-                    cnt[cur][i - num] -= cnt[c1][i];
+                    cnt[cur][i - num+1] -= cnt[c1][i];
             }
             if(isOff[cur]) break;
             cur = parent[cur];
@@ -59,7 +59,7 @@ void toggle_isOff(int c1) {
             for (int i = step; i <= 20;i++){
                 ret[cur] += cnt[c1][i];
                 if(i> step){
-                    cnt[cur][i - step] += cnt[c1][i];
+                    cnt[cur][i - step+1] += cnt[c1][i];
                 }
             }
             if(isOff[cur]) break;
