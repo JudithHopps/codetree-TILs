@@ -3,8 +3,8 @@
 #include <vector>
 #include <utility>
 using namespace std;
-const int dy[] = {-1, 0, 1, 0,-1,-1,1,1};
-const int dx[] = {0, 1, 0, -1,-1,1,-1,1};
+const int dy[] = {-1, 0, 1, 0, -1, -1, 1, 1};
+const int dx[] = {0, 1, 0, -1, -1, 1, -1, 1};
 const int INF = 987654321;
 
 struct S
@@ -45,7 +45,7 @@ void crashR(int idx, int score, int dy, int dx)
     santa[idx].score += score;
 
     a[santa[idx].y][santa[idx].x] = 0;
-    
+
     santa[idx].y += dy * score;
     santa[idx].x += dx * score;
 
@@ -57,95 +57,112 @@ void crashR(int idx, int score, int dy, int dx)
     }
     else
     {
-        santa[idx].sleep = M-2;
+        santa[idx].sleep = 2;
         int ni = a[santa[idx].y][santa[idx].x];
         if (ni)
         {
             interaction(ni, dy, dx);
         }
         a[santa[idx].y][santa[idx].x] = idx;
-
     }
 }
 // 루돌프의 움직임 처리 함수
-void moveR() {
+void moveR()
+{
     // 가장 가까운 산타를 향해 8방향 중 하나
     int dist = INF, p = -1;
-    for (int i = 1; i <= P; i++) {
-        if (santa[i].die) continue;
+    for (int i = 1; i <= P; i++)
+    {
+        if (santa[i].die)
+            continue;
         int now_dist = (santa[i].y - RY) * (santa[i].y - RY) + (santa[i].x - RX) * (santa[i].x - RX);
-        if (dist > now_dist) {
+        if (dist > now_dist)
+        {
             dist = now_dist;
             p = i;
-        } else if (now_dist == dist) {
-            if (santa[p].y == santa[i].y) {
-                if (santa[p].x < santa[i].x) {
+        }
+        else if (now_dist == dist)
+        {
+            if (santa[p].y == santa[i].y)
+            {
+                if (santa[p].x < santa[i].x)
+                {
                     p = i;
                 }
-            } else if (santa[p].y < santa[i].y) {
+            }
+            else if (santa[p].y < santa[i].y)
+            {
                 p = i;
             }
         }
     }
-    if(p == -1) return;
-    priority_queue < pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    if (p == -1)
+        return;
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
 
-    for (int j = 0; j < 8; j++) {
+    for (int j = 0; j < 8; j++)
+    {
         int ny = RY + dy[j];
         int nx = RX + dx[j];
-        if (ny < 0 || nx < 0 || ny >= N || nx >= N ) continue;
+        if (ny < 0 || nx < 0 || ny >= N || nx >= N)
+            continue;
         int now_dist = (ny - santa[p].y) * (ny - santa[p].y) + (nx - santa[p].x) * (nx - santa[p].x);
 
-        if (dist <= now_dist) continue;
+        if (dist <= now_dist)
+            continue;
         pq.push({now_dist, j});
     }
 
-    if(pq.empty()) return;
+    if (pq.empty())
+        return;
     int j = pq.top().second;
     RY += dy[j];
     RX += dx[j];
-    if (a[RY][RX]) crashR(a[RY][RX], C, dy[j], dx[j]);
+    if (a[RY][RX])
+        crashR(a[RY][RX], C, dy[j], dx[j]);
 }
 
 // 산타의 움직임 처리 함수
-void moveS() {
-    for (int i = 1; i <= P; i++) {
-        if (santa[i].die) continue;
-        if (santa[i].sleep) {
-            if(santa[i].sleep == M){
-                santa[i].sleep = 0;
-            } else {
-                // cout << M << "턴 중 " << i << "번째 자고 있어\n";
-                continue;
-            }
-        }
+void moveS()
+{
+    for (int i = 1; i <= P; i++)
+    {
+        if (santa[i].die)
+            continue;
+        if (santa[i].sleep)
+            continue;
 
-        priority_queue < pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         int y = santa[i].y;
         int x = santa[i].x;
         int dist = (y - RY) * (y - RY) + (x - RX) * (x - RX);
 
-        for (int j = 0; j < 4; j++) {
+        for (int j = 0; j < 4; j++)
+        {
             int ny = y + dy[j];
             int nx = x + dx[j];
-            if (ny < 0 || nx < 0 || ny >= N || nx >= N || a[ny][nx]) continue;
+            if (ny < 0 || nx < 0 || ny >= N || nx >= N || a[ny][nx])
+                continue;
             int now_dist = (ny - RY) * (ny - RY) + (nx - RX) * (nx - RX);
 
-            if (dist <= now_dist) continue;
+            if (dist <= now_dist)
+                continue;
             pq.push({now_dist, j});
         }
-        if(pq.empty()) continue;
+        if (pq.empty())
+            continue;
 
         int j = pq.top().second;
-        int ny = y + dy[j]; 
-        int nx = x + dx[j]; 
+        int ny = y + dy[j];
+        int nx = x + dx[j];
 
-        a[y][x] = 0; // 이전 위치 초기화
+        a[y][x] = 0;   // 이전 위치 초기화
         a[ny][nx] = i; // 새로운 위치에 산타 저장
         santa[i].y = ny;
         santa[i].x = nx;
 
-        if (RY == ny && RX == nx) {
+        if (RY == ny && RX == nx)
+        {
             crashR(i, D, dy[j] * -1, dx[j] * -1);
         }
     }
@@ -157,6 +174,10 @@ void getScore()
         if (santa[i].die)
             continue;
         santa[i].score++;
+        if (santa[i].sleep)
+        {
+            santa[i].sleep--;
+        }
     }
 }
 
@@ -210,13 +231,13 @@ int main()
         // 루돌프 move
         moveR();
 
-        // print(); 
+        // print();
         // 산타 move
         moveS();
 
-
         // 산타 점수
-        if(safe) getScore();
+        if (safe)
+            getScore();
 
         // print();
     }
