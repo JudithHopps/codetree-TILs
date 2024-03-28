@@ -1,3 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <stdio.h>
 #include <iostream>
 #include <cstring>
 #include <vector>
@@ -47,11 +50,10 @@ void plusAttack()
 	{
 		for (int j = 0; j < m; j++)
 		{
-			if (!map[i][j] || b[i][j])
+			if (map[i][j]==0 || b[i][j])
 				continue;
 			int target = a[i][j] - 1;
 			map[i][j] += 1;
-			v[target].attack = map[i][j];
 		}
 	}
 }
@@ -59,10 +61,12 @@ void plusAttack()
 bool isOnly()
 {
 	int cnt = 0;
-	for (int i = 0; i < potab; i++)
+	for (int i = 0; i < n; i++)
 	{
-		if (v[i].attack)
-			cnt++;
+		for (int j = 0; j < m; j++)
+		{
+			if (!map[i][j]) cnt++;
+		}
 	}
 	return cnt == 1;
 }
@@ -86,9 +90,13 @@ void goLazer(int y, int x) {
 		int nx = transNYNX(x + dx[i]);
 		if (a[ny][nx] == 0)continue;
 		if (visited[ny][nx] != visited[y][x] - 1) continue;
+		if (b[ny][nx]) continue;
 		b[ny][nx] -= v[cur].attack / 2;
 		goLazer(ny, nx);
 		if (flag) return;
+		else {
+			b[ny][nx] = 0;
+		}
 	}
 }
 bool canGo()
@@ -140,7 +148,7 @@ void goPotan()
 		if (a[ny][nx] == 0)
 			continue;
 		//v[a[ny][nx]].attack = max(0, v[a[ny][nx]].attack - att / 2);
-		b[ny][nx] -= v[cur].attack / 2;
+		b[ny][nx] -= att / 2;
 	}
 }
 void getSub() {
@@ -158,9 +166,6 @@ void resetAttack() {
 			int target = a[i][j] - 1;
 			int attack = map[i][j];
 			int new_attack = max(0, attack + b[i][j]);
-			if (new_attack == 0) {
-				a[i][j] = 0;
-			}
 			map[i][j] = new_attack;
 			v[target].attack = new_attack;
 		}
@@ -179,18 +184,40 @@ void resetMap() {
 	}
 }
 void getCur() {
-	for (int i = 0; i < potab; i++) {
+	for (int i = 0; i < v.size(); i++) {
 		if (v[i].attack == 0) continue;
 		cur = i;
 		return;
 	}
 }
+
+void reVector() {
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (!a[i][j]) continue;
+			int target = a[i][j] - 1;
+			v[target].attack = map[i][j];
+			if (map[i][j] == 0) {
+				a[i][j] = 0;
+			}
+		}
+	}
+}
+void resetA() {
+	for (int i = 0; i < v.size(); i++) {
+		if (v[i].attack == 0) continue;
+		a[v[i].y][v[i].x] = i + 1;
+	}
+}
 int main()
-{
+{	
+	//freopen("data.txt", "r", stdin);
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
-
+	
 	cin >> n >> m >> K;
 	for (int i = 0; i < n; i++)
 	{
@@ -216,18 +243,22 @@ int main()
 	{
 		// 1개 남았어?
 
+		/*cout << "map" << "\n\n";
+		print(map);*/
 		// 공격자 선정
+
 		sort(v.begin(), v.end(), cmp);
+		resetA();
+
+		
 		getCur();
+
 
 		v[cur].attack += n + m;
 		v[cur].last = k;
 		map[v[cur].y][v[cur].x] = v[cur].attack;
 
-		/*cout << "map" << "\n\n";
-		print(map);*/
-
-		//cout << "공격자 선정 : " << v[cur].y << " , " << v[cur].x << "\n";
+		//cout << "공격자 선정 : " <<cur <<"\t" << v[cur].y << " , " << v[cur].x << "\n";
 
 	   // 피해자 선정
 		getSub();
@@ -235,10 +266,11 @@ int main()
 		// 공격자 공격
 		memset(b, 0, sizeof(b));
 
-		b[v[sub].y][v[sub].x] -= v[cur].attack;
+		b[v[sub].y][v[sub].x] = -v[cur].attack;
 		if (canGo()) {
 			/*cout << "CAN GO\n";
-			print(visited);*/
+			cout << "visited" << "\n";*/
+			//print(visited);
 			flag = false;
 			goLazer(v[sub].y, v[sub].x);
 			b[v[cur].y][v[cur].x] = 0;
@@ -252,13 +284,10 @@ int main()
 			/*cout << "b" << "\n\n";
 			print(b);*/
 		}
-
 		resetAttack();
 
-		/*cout << "a" << "\n\n";
-		print(a);*/
-		/*	cout << "map" << "\n";
-			print(map);*/
+		//cout << "a" << "\n\n";
+		//print(a);
 
 		if (isOnly())
 			break;
@@ -267,14 +296,19 @@ int main()
 		b[v[cur].y][v[cur].x] = 1;
 
 		plusAttack();
+		
+		reVector();
 
-		//resetMap();
+		
 		/*cout << "map" << "\n";
-		print(map);*/
+		print(map);
+		for (A a : v) {
+			cout << "일치? " << (a.attack == map[a.y][a.x]) << " : " << a.attack << "\t" << map[a.y][a.x] << "\n";
+		}*/
 	}
 	sort(v.begin(), v.end(), cmp);
 	getSub();
 	cout << v[sub].attack << "\n";
-
+	
 	return 0;
 }
