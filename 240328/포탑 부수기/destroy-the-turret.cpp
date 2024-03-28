@@ -8,7 +8,7 @@ using namespace std;
 const int dy[] = { 0, 1, 0, -1, -1, -1, 1, 1 };
 const int dx[] = { 1, 0, -1, 0, -1, 1, -1, 1 };
 
-int n, m, K,cur,sub, potab, map[14][14], a[14][14], b[14][14], visited[14][14];
+int n, m, K, cur = 0, sub = 0, potab = 0, map[14][14], a[14][14], b[14][14], visited[14][14];
 bool flag = false;
 struct A
 {
@@ -51,7 +51,7 @@ void plusAttack()
 				continue;
 			int target = a[i][j] - 1;
 			map[i][j] += 1;
-			v[target].attack =map[i][j];
+			v[target].attack = map[i][j];
 		}
 	}
 }
@@ -72,6 +72,7 @@ int transNYNX(int l)
 		return n - 1;
 	if (l == n)
 		return 0;
+	return l; 
 }
 void goLazer(int y, int x) {
 	if (y == v[cur].y && x == v[cur].x) {
@@ -92,7 +93,7 @@ void goLazer(int y, int x) {
 }
 bool canGo()
 {
-	queue<pair<int,int>> q;
+	queue<pair<int, int>> q;
 	memset(visited, 0, sizeof(visited));
 	int y = v[cur].y;
 	int x = v[cur].x;
@@ -139,7 +140,7 @@ void goPotan()
 		if (a[ny][nx] == 0)
 			continue;
 		//v[a[ny][nx]].attack = max(0, v[a[ny][nx]].attack - att / 2);
-		b[ny][nx] -= v[cur].attack/2;
+		b[ny][nx] -= v[cur].attack / 2;
 	}
 }
 void getSub() {
@@ -153,7 +154,7 @@ void resetAttack() {
 	// 공격 반영
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
-			if (a[i][j] == 0 || b[i][j] == 0 ) continue;
+			if (a[i][j] == 0 || b[i][j] == 0) continue;
 			int target = a[i][j] - 1;
 			int attack = map[i][j];
 			int new_attack = max(0, attack + b[i][j]);
@@ -163,7 +164,7 @@ void resetAttack() {
 			map[i][j] = new_attack;
 			v[target].attack = new_attack;
 		}
-		
+
 	}
 }
 void resetMap() {
@@ -172,7 +173,7 @@ void resetMap() {
 		for (int j = 0; j < m; j++)
 		{
 			if (a[i][j] == 0) continue;
-			int target = a[i][j]-1;
+			int target = a[i][j] - 1;
 			map[i][j] = v[target].attack;
 		}
 	}
@@ -211,13 +212,13 @@ int main()
 	/*cout << "a" << "\n\n";
 	print(a);
 	cout << "\n";*/
-	for(int k=1;k<=K;k++)
+	for (int k = 1; k <= K; k++)
 	{
 		// 1개 남았어?
 
 		// 공격자 선정
 		sort(v.begin(), v.end(), cmp);
-		getCur(); 
+		getCur();
 
 		v[cur].attack += n + m;
 		v[cur].last = k;
@@ -226,37 +227,38 @@ int main()
 		/*cout << "map" << "\n\n";
 		print(map);*/
 
-		 //cout << "공격자 선정 : " << v[cur].y << " , " << v[cur].x << "\n";
+		//cout << "공격자 선정 : " << v[cur].y << " , " << v[cur].x << "\n";
 
-		// 피해자 선정
+	   // 피해자 선정
 		getSub();
 		//cout << "피해자 선정 : " << v[sub].y << " , " << v[sub].x << "\n";
 		// 공격자 공격
 		memset(b, 0, sizeof(b));
 
 		b[v[sub].y][v[sub].x] -= v[cur].attack;
-		if(canGo() ){
+		if (canGo()) {
 			/*cout << "CAN GO\n";
 			print(visited);*/
 			flag = false;
-		    goLazer(v[sub].y,v[sub].x);
+			goLazer(v[sub].y, v[sub].x);
 			b[v[cur].y][v[cur].x] = 0;
 			/*cout << "b" << "\n\n";
 			print(b);*/
-		 } else {
+		}
+		else {
 			//cout << "Can't GO\n";
 			goPotan();
 			b[v[cur].y][v[cur].x] = 0;
 			/*cout << "b" << "\n\n";
 			print(b);*/
-		 }
+		}
 
 		resetAttack();
 
 		/*cout << "a" << "\n\n";
 		print(a);*/
-	/*	cout << "map" << "\n";
-		print(map);*/
+		/*	cout << "map" << "\n";
+			print(map);*/
 
 		if (isOnly())
 			break;
