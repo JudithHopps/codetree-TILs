@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -35,7 +34,7 @@ void init() {
 	v.clear();
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
-			if (a[i][j] == 0) continue;
+			if (a[i][j] <= 0) continue;
 			A temp;
 			temp.att = a[i][j];
 			temp.y = i;
@@ -103,7 +102,7 @@ void goLazer() {
 	int y = backY[ey][ex], x = backX[ey][ex];
 	while (!(y == sy && x == sx)) {
 		isAttacked[y][x] = true;
-		a[y][x] = max(a[y][x] - att / 2, 0);
+		a[y][x] -= att / 2;
 		y = backY[y][x];
 		x = backX[y][x];
 	}
@@ -118,7 +117,7 @@ void goPotan() {
 		int ny = (y + dy[i] + n) % n;
 		int nx = (x + dx[i] + m) % m;
 		if (a[ny][nx] == 0 || visited[ny][nx]) continue;
-		a[ny][nx] = max(a[ny][nx] - att / 2, 0);
+		a[ny][nx] -= - att / 2;
 		isAttacked[ny][nx] = true;
 	}
 }
