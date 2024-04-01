@@ -1,187 +1,267 @@
-#include <string>
 #include <iostream>
-#include <vector>
 #include <algorithm>
-#include <cstring>
 #include <queue>
-using namespace std;
-bool visited[14][14], isAttacked[14][14];
-int a[14][14],last[14][14],backY[14][14],backX[14][14],n, m, K, att;
-int sy, sx, ey, ex;
-const int dy[] = { 0,1,0,-1 ,-1,-1,1,1};
-const int dx[] = { 1,0,-1,0, -1,1,-1,1 };
+#include <vector>
+#include <tuple>
 
-struct A {
-	int att, last, y, x;
+using namespace std;
+
+#define MAX_N 10
+
+const int dx[4] = {0, 1, 0, -1}, dy[4] = {1, 0, -1, 0};
+const int dx2[9] = {0, 0, 0, -1, -1, -1, 1, 1, 1}, dy2[9] = {0, -1, 1, 0, -1, 1, 0, -1, 1};
+
+int n, m, k;
+int turn;
+
+// 현재 포탑들이 가진 힘과 언제 각성했는지 기록해줍니다.
+int board[MAX_N][MAX_N];
+int rec[MAX_N][MAX_N];
+
+// 빛의 공격을 할 때 방문 여부와 경로 방향을 기록해줍니다.
+bool vis[MAX_N][MAX_N];
+int back_x[MAX_N][MAX_N], back_y[MAX_N][MAX_N];
+
+// 공격과 무관했는지 여부를 저장합니다.
+bool is_active[MAX_N][MAX_N];
+
+// 구조체 turret을 정의해 관리합니다.
+struct Turret{
+    int x, y, r, p;
 };
 
-vector<A> v;
-bool cmp(A a, A b) {
-	if (a.att != b.att) return a.att < b.att;
-	if (a.last != b.last) return a.last > b.last;
-	if (a.y + a.x != b.y + b.x) return a.y + a.x > b.y + b.x;
-	return a.x > b.x;
+// 살아있는 포탑들을 관리합니다.
+vector<Turret> live_turret;
+
+// turret의 약함, 강함 우선순위에 맞게 정렬함수를 만들어줍니다.
+bool cmp(Turret a, Turret b) {
+    if(a.p != b.p) return a.p < b.p;
+    if(a.r != b.r) return a.r > b.r;
+    if(a.x + a.y != b.x + b.y) return a.x + a.y > b.x + b.y;
+    return a.y > b.y;
 }
-void resetArr(bool arr[14][14], bool flag) {
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			arr[i][j] = flag;
-		}
-	}
+
+// 턴을 진행하기 전 필요한 전처리를 정리해줍니다.
+void Init() {
+    turn++;
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++) {
+            vis[i][j] = false;
+            is_active[i][j] = false;
+        }
 }
-void init() {
-	// 현재 살아있는 포탑 v에 저장
-	v.clear();
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			if (a[i][j] == 0) continue;
-			A temp;
-			temp.att = a[i][j];
-			temp.y = i;
-			temp.x = j;
-			temp.last = last[i][j];
-			v.push_back(temp);
-		}
-	}
-	// 공격여부 확인 배열, visited 배열 초기화 
-	resetArr(visited, false);
-	resetArr(isAttacked, false);
-	/*for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			visited[i][j] = false;
-			isAttacked[i][j] = false;
-		}
-	}*/
+
+// 각성을 진행합니다.
+// 각성을 하면 가장 약한 포탑이 n + m만큼 강해집니다.
+void Awake() {
+    // 우선순위에 맞게 현재 살아있는 포탑들을 정렬해줍니다.
+    sort(live_turret.begin(), live_turret.end(), cmp);
+
+    // 가장 약한 포탑을 찾아 n + m만큼 더해주고,
+    // is_active와 live_turret 배열도 갱신해줍니다.
+    Turret weak_turret = live_turret[0];
+    int x = weak_turret.x;
+    int y = weak_turret.y;
+
+    board[x][y] += n + m;
+    rec[x][y] = turn;
+    weak_turret.p = board[x][y];
+    weak_turret.r = rec[x][y];
+    is_active[x][y] = true;
+
+    live_turret[0] = weak_turret;
 }
-void plusAtt(int k) {
-	sort(v.begin(), v.end(), cmp);
 
-	A week = v[0];
+// 레이저 공격을 진행합니다.
+bool LaserAttack() {
+    // 기존에 정렬된 가장 앞선 포탑이
+    // 각성한 포탑입니다.
+    Turret weak_turret = live_turret[0];
+    int sx = weak_turret.x;
+    int sy = weak_turret.y;
+    int pow = weak_turret.p;
 
-	a[week.y][week.x] += (n + m);
-	week.att = a[week.y][week.x];
-	att = week.att;
-	last[week.y][week.x] = k;
-	week.last = k;
-	v[0] = week;
+    // 기존에 정렬된 가장 뒤 포탑이
+    // 각성한 포탑을 제외한 포탑 중 가장 강한 포탑입니다.
+    Turret strong_turret = live_turret[(int) live_turret.size() - 1];
+    int ex = strong_turret.x;
+    int ey = strong_turret.y;
 
+    // bfs를 통해 최단경로를 관리해줍니다.
+    queue<pair<int, int> > q;
+    vis[sx][sy] = true;
+    q.push(make_pair(sx, sy));
+
+    // 가장 강한 포탑에게 도달 가능한지 여부를 can_attack에 관리해줍니다.
+    bool can_attack = false;
+
+    while(!q.empty()) {
+        int x, y;
+        tie(x, y) = q.front(); q.pop();
+
+        // 가장 강한 포탑에게 도달할 수 있다면
+        // 바로 멈춥니다.
+        if(x == ex && y == ey) {
+            can_attack = true;
+            break;
+        }
+
+        // 각각 우, 하, 좌, 상 순서대로 방문하며 방문 가능한 포탑들을 찾고
+        // queue에 저장해줍니다.
+        for(int dir = 0; dir < 4; dir++) {
+            int nx = (x + dx[dir] + n) % n;
+            int ny = (y + dy[dir] + m) % m;
+
+            // 이미 방문한 포탑이라면 넘어갑니다.
+            if(vis[nx][ny]) 
+                continue;
+
+            // 벽이라면 넘어갑니다.
+            if(board[nx][ny] == 0) 
+                continue;
+
+            vis[nx][ny] = true;
+            back_x[nx][ny] = x;
+            back_y[nx][ny] = y;
+            q.push(make_pair(nx, ny));
+        }
+    }
+
+    // 만약 도달 가능하다면 공격을 진행합니다.
+    if(can_attack) {
+        // 우선 가장 강한 포탑에게는 pow만큼의 공격을 진행합니다.
+        board[ex][ey] -= pow;
+        if(board[ex][ey] < 0) 
+            board[ex][ey] = 0;
+        is_active[ex][ey] = true;
+
+        // 기존의 경로를 역추적하며
+        // 경로 상에 있는 모든 포탑에게 pow / 2만큼의 공격을 진행합니다.
+        int cx = back_x[ex][ey];
+        int cy = back_y[ex][ey];
+
+        while(!(cx == sx && cy == sy)) {
+            board[cx][cy] -= pow / 2;
+            if(board[cx][cy] < 0) 
+                board[cx][cy] = 0;
+            is_active[cx][cy] = true;
+
+            int next_cx = back_x[cx][cy];
+            int next_cy = back_y[cx][cy];
+
+            cx = next_cx;
+            cy = next_cy;
+        }
+    }
+
+    // 공격을 성공했는지 여부를 반환합니다.
+    return can_attack;
 }
-bool canLazer() {
-	sy = v[0].y;
-	sx = v[0].x;
-	ey = v[v.size() - 1].y;
-	ex = v[v.size() - 1].x;
 
-	queue<pair<int, int>> q;
-	q.push({ sy,sx });
-	visited[sy][sx] = true;
+// 레이저 공격을 하지 못했다면 폭탄 공격을 진행합니다.
+void BombAttack() {
+    // 기존에 정렬된 가장 앞선 포탑이
+    // 각성한 포탑입니다.
+    Turret weak_turret = live_turret[0];
+    int sx = weak_turret.x;
+    int sy = weak_turret.y;
+    int pow = weak_turret.p;
 
-	while (q.size()) {
-		int y = q.front().first;
-		int x = q.front().second;
-		q.pop();
-		if (y == ey && x == ex) {
-			break;
-		}
-		for (int i = 0; i < 4; i++) {
-			int ny = (y + dy[i] +n) % n;
-			int nx = (x + dx[i] +m) % m;
-			if (a[ny][nx] == 0 || visited[ny][nx]) continue;
-			visited[ny][nx] = true;
-			backY[ny][nx] = y;
-			backX[ny][nx] = x;
-			q.push({ ny,nx });
-		}
-	}
-	
-	return visited[ey][ex];
+    // 기존에 정렬된 가장 뒤 포탑이
+    // 각성한 포탑을 제외한 포탑 중 가장 강한 포탑입니다.
+    Turret strong_turret = live_turret[(int) live_turret.size() - 1];
+    int ex = strong_turret.x;
+    int ey = strong_turret.y;
+
+    // 가장 강한 포탑의 3 * 3 범위를 모두 탐색하며
+    // 각각에 맞는 공격을 진행합니다.
+    for(int dir = 0; dir < 9; dir++) {
+        int nx = (ex + dx2[dir] + n) % n;
+        int ny = (ey + dy2[dir] + m) % m;
+
+        // 각성한 포탑 자기 자신일 경우 넘어갑니다.
+        if(nx == sx && ny == sy) 
+            continue;
+
+        // 가장 강한 포탑일 경우 pow만큼의 공격을 진행합니다.
+        if(nx == ex && ny == ey) {
+            board[nx][ny] -= pow;
+            if(board[nx][ny] < 0) 
+                board[nx][ny] = 0;
+            is_active[nx][ny] = true;
+        }
+        // 그 외의 경우 pow / 2만큼의 공격을 진행합니다.
+        else {
+            board[nx][ny] -= pow / 2;
+            if(board[nx][ny] < 0) 
+                board[nx][ny] = 0;
+            is_active[nx][ny] = true;
+        }
+    }
 }
-void goLazer() {
-	isAttacked[sy][sx] = true;
-	isAttacked[ey][ex] = true;
-	a[ey][ex] = max(a[ey][ex] - att, 0);
-	int y = backY[ey][ex], x = backX[ey][ex];
-	while (!(y == sy && x == sx)) {
-		isAttacked[y][x] = true;
-		a[y][x] = max(a[y][x] - att / 2, 0);
-		y = backY[y][x];
-		x = backX[y][x];
-	}
+
+// 공격에 관여하지 않은 모든 살아있는 포탑의 힘을 1 증가시킵니다.
+void Reserve() {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < m; j++) {
+            if(is_active[i][j]) 
+                continue;
+            if(board[i][j] == 0) 
+                continue;
+            board[i][j]++;
+        }
+    }
 }
-void goPotan() {
-	isAttacked[sy][sx] = true;
-	isAttacked[ey][ex] = true;
-	a[ey][ex] = max(a[ey][ex] - att, 0);
-	int y = ey, x = ex;
 
-	for (int i = 0; i < 8; i++) {
-		int ny = (y + dy[i] + n) % n;
-		int nx = (x + dx[i] + m) % m;
-		if (a[ny][nx] == 0 || visited[ny][nx]) continue;
-		a[ny][nx] = max(a[ny][nx] - att / 2, 0);
-		isAttacked[ny][nx] = true;
-	}
-}
-void getStrong() {
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			if (a[i][j] == 0 || isAttacked[i][j]) continue;
-			a[i][j]++;
-		}
-	}
-}
-int getMax() {
-	int mx = 0;
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			mx = max(mx, a[i][j]);
-		}
-	}
-	return mx;
-}
-int main()
-{
-	//freopen("data.txt", "r", stdin);
-	ios_base::sync_with_stdio(false);
-	cin.tie(NULL);
-	cout.tie(NULL);
+int main() {
+    // 입력:
+    cin >> n >> m >> k;
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+            cin >> board[i][j];
 
-	cin >> n >> m >> K;
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			cin >> a[i][j];
-		}
-	}
-	//print(a);
-	for (int k = 1; k <= K; k++) {
-		// 현재 살아있는 포탑 v에 저장
-		// 공격여부 확인 배열, visited 배열 초기화 
-		// backY,backX 초기화 
-		init();
-		
-		// 1개만 살아있으면 stop
-		if (v.size() <= 1) break;
+    // k턴 동안 진행됩니다.
+    while(k--) {
+        // 턴을 진행하기 전 살아있는 포탑을 정리합니다.
+        live_turret.clear();
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < m; j++)
+                if(board[i][j]) {
+                    Turret new_turret;
+                    new_turret.x = i;
+                    new_turret.y = j;
+                    new_turret.r = rec[i][j];
+                    new_turret.p = board[i][j];
 
-		// 공격자에게 +(N+M)점수 부여  + 최근 공격 갱신
-		plusAtt(k);
-		
-		// lazer공격 가능
-		if (canLazer()) {
-			//cout << "Can\n";
-			goLazer();
-		}
-		// potan 공격
-		else {
-			//cout << "Can't\n";
-			goPotan();
-		}
+                    live_turret.push_back(new_turret);
+                }
 
-		// 공격 무관한 포탑 공격력 +1
-		getStrong();
+        // 살아있는 포탑이 1개 이하라면 바로 종료합니다.
+        if(live_turret.size() <= 1) 
+            break;
 
-		//print(a);
-	}
+        // 턴을 진행하기 전 필요한 전처리를 정리해줍니다.
+        Init();
 
-	cout << getMax() << "\n";
-	return 0;
+        // 각성을 진행합니다.
+        Awake();
+
+        // 레이저 공격을 진행합니다.
+        bool is_suc = LaserAttack();
+        // 레이저 공격을 하지 못했다면 포탄 공격을 진행합니다.
+        if(!is_suc) 
+            BombAttack();
+
+        // 공격에 관여하지 않은 모든 살아있는 포탑의 힘을 1 증가시킵니다.
+        Reserve();
+    }
+
+    // 살아있는 포탑의 힘 중 가장 큰 값을 출력합니다.
+    int ans = 0;
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+            ans = max(ans, board[i][j]);
+
+    cout << ans;
+    return 0;
 }
