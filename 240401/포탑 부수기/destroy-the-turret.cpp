@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -76,12 +74,13 @@ bool canLazer() {
 	queue<pair<int, int>> q;
 	q.push({ sy,sx });
 	visited[sy][sx] = true;
-
-	while (q.size()) {
+	bool can_attack = false;
+	while (!q.empty()) {
 		int y = q.front().first;
 		int x = q.front().second;
 		q.pop();
 		if (y == ey && x == ex) {
+			can_attack = true;
 			break;
 		}
 		for (int i = 0; i < 4; i++) {
@@ -95,7 +94,7 @@ bool canLazer() {
 		}
 	}
 	
-	return visited[ey][ex];
+	return can_attack;
 }
 void goLazer() {
 	isAttacked[sy][sx] = true;
@@ -142,7 +141,6 @@ int getMax() {
 }
 int main()
 {
-	//freopen("data.txt", "r", stdin);
 	ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 	cout.tie(NULL);
