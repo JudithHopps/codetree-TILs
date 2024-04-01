@@ -1,6 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
-#include <stdio.h>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -55,9 +52,6 @@ void init() {
 			isAttacked[i][j] = false;
 		}
 	}*/
-	//// backY,backX 초기화 
-	memset(backY, 0, sizeof(backY));
-	memset(backX, 0, sizeof(backX));
 }
 void plusAtt(int k) {
 	sort(v.begin(), v.end(), cmp);
@@ -144,14 +138,6 @@ int getMax() {
 		}
 	}
 	return mx;
-}
-void print(int arr[14][14]) {
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < m; j++) {
-			cout << arr[i][j] << " ";
-		}
-		cout << "\n";
-	}
 }
 int main()
 {
